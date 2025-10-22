@@ -161,28 +161,36 @@ fn expand_byte_set(mut sequences: Vec<Vec<u8>>) -> Result<TokenStream2> {
                 #root_expr
             }
 
-            #[cfg(test)]
+            #[cfg(any(test, feature = "debug-metadata"))]
             pub const NODES: [::comtains::debug::DebugNode; #node_count] = [
                 #( #node_defs ),*
             ];
 
-            #[cfg(test)]
+            #[cfg(any(test, feature = "debug-metadata"))]
             pub const EDGES: [::comtains::debug::DebugEdge; #edge_count] = [
                 #( #edge_defs ),*
             ];
 
-            #[cfg(test)]
-            pub const METADATA: ::comtains::debug::ByteSetMetadata = ::comtains::debug::ByteSetMetadata {
-                nodes: &NODES,
-                edges: &EDGES,
-            };
+            #[cfg(any(test, feature = "debug-metadata"))]
+            pub const METADATA: ::comtains::debug::ByteSetMetadata =
+                ::comtains::debug::ByteSetMetadata {
+                    nodes: &NODES,
+                    edges: &EDGES,
+                };
         }
 
-        ::comtains::ByteSet {
-            contains: #module_ident::contains,
-            len: #len_lit,
-            #[cfg(test)]
-            metadata: &#module_ident::METADATA,
+        #[cfg(any(test, feature = "debug-metadata"))]
+        {
+            ::comtains::ByteSet::__from_parts(
+                #module_ident::contains,
+                #len_lit,
+                &#module_ident::METADATA,
+            )
+        }
+
+        #[cfg(not(any(test, feature = "debug-metadata")))]
+        {
+            ::comtains::ByteSet::__from_parts(#module_ident::contains, #len_lit)
         }
     }})
 }
@@ -196,7 +204,7 @@ fn expand_empty_byte_set() -> TokenStream2 {
                 false
             }
 
-            #[cfg(test)]
+            #[cfg(any(test, feature = "debug-metadata"))]
             pub const NODES: [::comtains::debug::DebugNode; 1] = [
                 ::comtains::debug::DebugNode {
                     terminal: false,
@@ -205,21 +213,29 @@ fn expand_empty_byte_set() -> TokenStream2 {
                 }
             ];
 
-            #[cfg(test)]
+            #[cfg(any(test, feature = "debug-metadata"))]
             pub const EDGES: [::comtains::debug::DebugEdge; 0] = [];
 
-            #[cfg(test)]
-            pub const METADATA: ::comtains::debug::ByteSetMetadata = ::comtains::debug::ByteSetMetadata {
-                nodes: &NODES,
-                edges: &EDGES,
-            };
+            #[cfg(any(test, feature = "debug-metadata"))]
+            pub const METADATA: ::comtains::debug::ByteSetMetadata =
+                ::comtains::debug::ByteSetMetadata {
+                    nodes: &NODES,
+                    edges: &EDGES,
+                };
         }
 
-        ::comtains::ByteSet {
-            contains: #module_ident::contains,
-            len: 0usize,
-            #[cfg(test)]
-            metadata: &#module_ident::METADATA,
+        #[cfg(any(test, feature = "debug-metadata"))]
+        {
+            ::comtains::ByteSet::__from_parts(
+                #module_ident::contains,
+                0usize,
+                &#module_ident::METADATA,
+            )
+        }
+
+        #[cfg(not(any(test, feature = "debug-metadata")))]
+        {
+            ::comtains::ByteSet::__from_parts(#module_ident::contains, 0usize)
         }
     }}
 }
@@ -290,7 +306,7 @@ fn build_trie(sequences: &[Vec<u8>]) -> Vec<Node> {
 
 fn generate_node_expr(nodes: &[Node], index: usize, depth: usize) -> TokenStream2 {
     let node = &nodes[index];
-    let depth_lit = syn::LitInt::new(&format!("{}usize", depth), Span::call_site());
+    let depth_lit = syn::LitInt::new(&format!("{depth}usize"), Span::call_site());
 
     if node.children.is_empty() {
         if node.terminal {
