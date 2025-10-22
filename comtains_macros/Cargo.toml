@@ -1,6 +1,6 @@
 [package]
 name = "comtains_macros"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 authors = ["Leander Kohler"]
 description = "Procedural macro that builds comtains byte-set matchers"
