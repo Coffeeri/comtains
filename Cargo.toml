@@ -19,7 +19,7 @@ keywords = ["compile-time", "proc-macro", "trie", "byte", "matcher"]
 categories = ["development-tools::profiling", "algorithms", "no-std"]
 
 [dependencies]
-comtains_macros = { path = "comtains_macros" }
+comtains_macros = { path = "comtains_macros", version = "0.1.0" }
 
 [dev-dependencies]
 iai-callgrind = "0.15"

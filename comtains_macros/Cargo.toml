@@ -2,6 +2,15 @@
 name = "comtains_macros"
 version = "0.1.0"
 edition = "2021"
+authors = ["Leander Kohler"]
+description = "Procedural macro that builds comtains byte-set matchers"
+license = "MIT"
+repository = "https://github.com/Coffeeri/comtains"
+documentation = "https://docs.rs/comtains"
+homepage = "https://github.com/Coffeeri/comtains"
+readme = "../README.md"
+keywords = ["proc-macro", "compile-time", "trie", "byte", "matcher"]
+categories = ["development-tools::profiling", "algorithms", "no-std"]
 
 [lib]
 proc-macro = true
