@@ -5,10 +5,9 @@ on:
     types: [published]
 
 jobs:
-  publish:
-    name: Publish to crates.io
+  verify:
+    name: Verify Release
     runs-on: ubuntu-latest
-    environment: crates-io
     steps:
       - uses: actions/checkout@v4
 
@@ -25,16 +24,32 @@ jobs:
       - name: Tests
         run: cargo test --workspace
 
-      - name: Validate metadata (dry run)
-        run: cargo publish --locked -p comtains_macros --dry-run
+      - name: Package comtains_macros
+        run: cargo package --locked -p comtains_macros
 
-      - name: Validate workspace crate (dry run)
-        run: cargo publish --locked --dry-run
+      - name: Package comtains
+        run: cargo package --locked
+
+      - name: Ensure clean workspace
+        run: git diff --stat --exit-code
+
+  publish:
+    name: Publish to crates.io
+    runs-on: ubuntu-latest
+    needs: verify
+    environment: crates-io
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
 
       - name: Publish comtains_macros
         run: cargo publish --locked -p comtains_macros
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+
+      - name: Wait for index update
+        run: sleep 45
 
       - name: Publish comtains
         run: cargo publish --locked
