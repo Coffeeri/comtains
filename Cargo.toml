@@ -1,9 +1,16 @@
+[workspace]
+members = [
+    ".",
+    "comtains_macros",
+]
+
 [package]
 name = "comtains"
 version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+comtains_macros = { path = "comtains_macros" }
 
 [dev-dependencies]
 iai-callgrind = "0.15"
