@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  lint-test:
+    name: Lint and Test
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy,rustfmt
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Format check
+        run: cargo fmt --all -- --check
+
+      - name: Clippy
+        run: cargo clippy --workspace --all-targets -- -D warnings
+
+      - name: Tests
+        run: cargo test --workspace
+
+  benches:
+    name: Benchmarks (iai-callgrind)
+    runs-on: ubuntu-latest
+    needs: lint-test
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy,rustfmt
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Install Callgrind requirements
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y valgrind
+
+      - name: Install iai-callgrind-runner
+        run: cargo install --locked --version 0.15.2 iai-callgrind-runner
+
+      - name: Export runner path
+        run: echo "IAI_CALLGRIND_RUNNER=$(which iai-callgrind-runner)" >> "$GITHUB_ENV"
+
+      - name: Run benchmarks
+        run: cargo bench --bench byte_set
