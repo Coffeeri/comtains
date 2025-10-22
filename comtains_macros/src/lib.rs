@@ -20,15 +20,15 @@ use syn::{
 /// ```rust,ignore
 /// use comtains::{byte_set, ByteSet};
 ///
-/// const OPCODES: ByteSet = byte_set![
-///     b"\xA0\xB1",
-///     b"\xA1\xB2",
-///     [0xA1, 0xB2, 0xC3],
+/// const METHODS: ByteSet = byte_set![
+///     b"GET",
+///     b"POST",
+///     [b'P', b'U', b'T'],
 /// ];
 ///
-/// assert!(OPCODES.contains(b"\xA0\xB1"));
-/// assert!(OPCODES.contains(b"\xA1\xB2\xC3"));
-/// assert!(!OPCODES.contains(b"\xA1\xB3"));
+/// assert!(METHODS.contains(b"GET"));
+/// assert!(METHODS.contains(b"PUT"));
+/// assert!(!METHODS.contains(b"DELETE"));
 /// ```
 #[proc_macro]
 pub fn byte_set(input: TokenStream) -> TokenStream {

@@ -1,24 +1,19 @@
 # comtains
 
-`comtains` builds zero-allocation byte-set matchers at compile time. Use the `byte_set!` macro to expand your literals into an inlined decision tree that short-circuits on the first mismatching byte, giving predictable instruction counts for hot opcode or protocol classifiers.
+`comtains` expands static byte sequences into zero-allocation matchers at compile time. The `byte_set!` macro emits a branch-ordered decision tree, keeping membership checks to a handful of predictable instructions—ideal for tight opcode dispatchers or protocol parsers.
 
 ```rust
 use comtains::{byte_set, ByteSet};
 
-const OPCODES: ByteSet = byte_set![
-    b"\xA0\xB1",
-    b"\xA1\xB2",
-    b"\xA1\xB2\xC3",
-    b"\xA1\xB2\xC4",
-];
+const HTTP_METHODS: ByteSet = byte_set![b"GET", b"POST", b"PUT", b"PATCH"];
 
-assert!(OPCODES.contains(b"\xA1\xB2"));
-assert!(!OPCODES.contains(b"\xA1\xB3"));
+assert!(HTTP_METHODS.contains(b"GET"));
+assert!(!HTTP_METHODS.contains(b"DELETE"));
 ```
 
 ## How it works
 
-1. At macro expansion time every byte string, string literal, or byte array is converted into a shared trie.  
-2. Each trie node counts how often its edges are used; siblings are sorted by descending weight (ties broken by byte value).  
-3. The macro emits a `match` ladder that compares `candidate.get(depth)` against those ordered edges, recursing into the subtree or failing fast.  
-4. Optional debug metadata (enabled in tests or with the `debug-metadata` feature) exposes the trie layout for inspection and benchmarking.
+1. All inputs are parsed at macro expansion time into a trie that shares common prefixes.  
+2. Each edge records how many sequences traverse it; siblings are sorted by descending weight to probe common paths first.  
+3. The macro generates a nested `match` ladder that compares `candidate[depth]`, short-circuiting on the first mismatch.  
+4. Debug metadata is emitted alongside the matcher so tests and benchmarks can assert branch ordering or inspect the trie layout.

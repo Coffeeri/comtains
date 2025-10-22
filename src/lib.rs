@@ -71,9 +71,9 @@ impl ByteSet {
     /// ```
     /// use comtains::{byte_set, ByteSet};
     ///
-    /// const OPCODES: ByteSet = byte_set![b"\xAA\xBB", b"\xAA\xBC"];
-    /// assert!(OPCODES.contains(b"\xAA\xBB"));
-    /// assert!(!OPCODES.contains(b"\xAA\x00"));
+    /// const HTTP_METHODS: ByteSet = byte_set![b"GET", b"POST", b"PUT"];
+    /// assert!(HTTP_METHODS.contains(b"POST"));
+    /// assert!(!HTTP_METHODS.contains(b"DELETE"));
     /// ```
     #[inline(always)]
     pub fn contains(&self, candidate: &[u8]) -> bool {
