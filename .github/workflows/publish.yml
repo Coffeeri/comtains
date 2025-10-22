@@ -3,6 +3,7 @@ name: Publish Crate
 on:
   release:
     types: [published]
+  workflow_dispatch:
 
 jobs:
   verify:
