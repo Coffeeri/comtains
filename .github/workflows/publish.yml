@@ -13,13 +13,30 @@ jobs:
       - uses: actions/checkout@v4
 
       - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy,rustfmt
 
-      - name: Publish comtains
-        run: cargo publish --locked
-        env:
-          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+      - name: Verify formatting
+        run: cargo fmt --all -- --check
+
+      - name: Clippy
+        run: cargo clippy --workspace --all-targets -- -D warnings
+
+      - name: Tests
+        run: cargo test --workspace
+
+      - name: Validate metadata (dry run)
+        run: cargo publish --locked -p comtains_macros --dry-run
+
+      - name: Validate workspace crate (dry run)
+        run: cargo publish --locked --dry-run
 
       - name: Publish comtains_macros
         run: cargo publish --locked -p comtains_macros
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+
+      - name: Publish comtains
+        run: cargo publish --locked
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
