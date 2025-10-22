@@ -8,6 +8,15 @@ members = [
 name = "comtains"
 version = "0.1.0"
 edition = "2024"
+authors = ["Leander Kohler"]
+description = "Zero-allocation byte-set matcher generated at compile time"
+license = "MIT"
+repository = "https://github.com/Coffeeri/comtains"
+documentation = "https://docs.rs/comtains"
+homepage = "https://github.com/Coffeeri/comtains"
+readme = "README.md"
+keywords = ["compile-time", "proc-macro", "trie", "byte", "matcher"]
+categories = ["development-tools::profiling", "algorithms", "no-std"]
 
 [dependencies]
 comtains_macros = { path = "comtains_macros" }
