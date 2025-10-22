@@ -10,6 +10,26 @@ use syn::{
     parse_macro_input, Expr, ExprArray, ExprLit, Lit, Result, Token,
 };
 
+/// Build a [`ByteSet`](::comtains::ByteSet) from compile-time byte sequences.
+///
+/// The macro accepts byte string literals (`b"..."`), UTF-8 string literals
+/// (`"..."`, which are converted to bytes), or arrays of integer / byte
+/// literals (`[0xAA, 0xBB]`). Duplicate entries are removed automatically.
+///
+/// # Example
+/// ```rust,ignore
+/// use comtains::{byte_set, ByteSet};
+///
+/// const OPCODES: ByteSet = byte_set![
+///     b"\xA0\xB1",
+///     b"\xA1\xB2",
+///     [0xA1, 0xB2, 0xC3],
+/// ];
+///
+/// assert!(OPCODES.contains(b"\xA0\xB1"));
+/// assert!(OPCODES.contains(b"\xA1\xB2\xC3"));
+/// assert!(!OPCODES.contains(b"\xA1\xB3"));
+/// ```
 #[proc_macro]
 pub fn byte_set(input: TokenStream) -> TokenStream {
     let sequences = parse_macro_input!(input as SequenceList);

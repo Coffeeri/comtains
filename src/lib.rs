@@ -1,6 +1,36 @@
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
 //! Compile-time optimized membership checks for static byte sequences.
+//!
+//! `comtains` expands fixed sets of byte strings into zero-allocation,
+//! branch-ordered decision trees. The resulting [`ByteSet`] can be embedded
+//! directly into hot parsers, opcode dispatchers, or protocol classifiers
+//! without any runtime preprocessing.
+//!
+//! # Example
+//! ```rust
+//! use comtains::{byte_set, ByteSet};
+//!
+//! const KEYWORDS: ByteSet = byte_set![
+//!     b"GET",
+//!     b"POST",
+//!     b"PUT",
+//!     b"PATCH",
+//! ];
+//!
+//! assert!(KEYWORDS.contains(b"POST"));
+//! assert!(!KEYWORDS.contains(b"DELETE"));
+//! ```
+//!
+//! # Design
+//! 1. The `byte_set!` macro parses string or byte-sequence literals at compile
+//!    time and builds a trie that merges shared prefixes.
+//! 2. Each branch records how many sequences pass through it; siblings are
+//!    sorted by descending weight so the hottest paths are checked first.
+//! 3. The macro emits a nested `match` ladder that compares each byte via
+//!    `candidate.get(depth)`, returning early on the first mismatch.
+//! 4. Optional debug metadata mirrors the trie structure so unit tests and
+//!    benchmarks can assert branch ordering.
 
 extern crate self as comtains;
 
@@ -34,18 +64,43 @@ impl ByteSet {
     }
 
     /// Returns `true` when the provided sequence is a member of the set.
+    ///
+    /// The lookup short-circuits on the first mismatching byte and never
+    /// allocates.
+    ///
+    /// ```
+    /// use comtains::{byte_set, ByteSet};
+    ///
+    /// const OPCODES: ByteSet = byte_set![b"\xAA\xBB", b"\xAA\xBC"];
+    /// assert!(OPCODES.contains(b"\xAA\xBB"));
+    /// assert!(!OPCODES.contains(b"\xAA\x00"));
+    /// ```
     #[inline(always)]
     pub fn contains(&self, candidate: &[u8]) -> bool {
         (self.contains)(candidate)
     }
 
     /// Number of sequences stored in the set.
+    ///
+    /// ```
+    /// use comtains::{byte_set, ByteSet};
+    ///
+    /// const PAIRS: ByteSet = byte_set![b"ab", b"cd", b"ef"];
+    /// assert_eq!(PAIRS.len(), 3);
+    /// ```
     #[inline(always)]
     pub const fn len(&self) -> usize {
         self.len
     }
 
     /// Returns `true` when the set is empty.
+    ///
+    /// ```
+    /// use comtains::{byte_set, ByteSet};
+    ///
+    /// const EMPTY: ByteSet = byte_set![];
+    /// assert!(EMPTY.is_empty());
+    /// ```
     #[inline(always)]
     pub const fn is_empty(&self) -> bool {
         self.len == 0
@@ -62,28 +117,38 @@ impl ByteSet {
     }
 }
 
+/// Introspection helpers emitted alongside every matcher.
+/// Structures describing the generated trie. Intended for tests and debugging.
 #[allow(dead_code)]
 pub mod debug {
     /// Minimal node description emitted for tests and debugging.
     #[derive(Clone, Copy, Debug)]
     pub struct DebugNode {
+        /// `true` if the node corresponds to a complete sequence.
         pub terminal: bool,
+        /// Starting index of this node's children in the edge table.
         pub child_start: usize,
+        /// Number of outgoing edges from this node.
         pub child_len: usize,
     }
 
     /// Minimal edge description emitted for tests and debugging.
     #[derive(Clone, Copy, Debug)]
     pub struct DebugEdge {
+        /// Byte label associated with the transition.
         pub byte: u8,
+        /// Index of the target node within the node table.
         pub target: usize,
+        /// Number of sequences that traversed this edge.
         pub weight: usize,
     }
 
     /// Metadata bundle exported from the macro for inspection.
     #[derive(Clone, Copy, Debug)]
     pub struct ByteSetMetadata {
+        /// Table of trie nodes in breadth-first order.
         pub nodes: &'static [DebugNode],
+        /// Table of edges grouped per node.
         pub edges: &'static [DebugEdge],
     }
 
@@ -96,7 +161,7 @@ mod tests {
     use super::*;
 
     const EXAMPLE_SET: ByteSet =
-        byte_set![b"\xA0\xB1", b"\xA1\xB2", b"\xA1\xB2\xC3", b"\xA1\xB2\xC4",];
+        byte_set![b"\xA0\xB1", b"\xA1\xB2", b"\xA1\xB2\xC3", b"\xA1\xB2\xC4"];
 
     #[test]
     fn finds_present_sequences() {
