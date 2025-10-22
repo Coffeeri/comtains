@@ -15,14 +15,12 @@ pub use comtains_macros::byte_set;
 pub struct ByteSet {
     pub(crate) contains: fn(&[u8]) -> bool,
     pub(crate) len: usize,
-    #[cfg(any(test, feature = "debug-metadata"))]
-    #[cfg_attr(not(test), allow(dead_code))]
+    #[allow(dead_code)]
     pub(crate) metadata: &'static debug::ByteSetMetadata,
 }
 
 impl ByteSet {
     #[doc(hidden)]
-    #[cfg(any(test, feature = "debug-metadata"))]
     pub const fn __from_parts(
         contains: fn(&[u8]) -> bool,
         len: usize,
@@ -33,12 +31,6 @@ impl ByteSet {
             len,
             metadata,
         }
-    }
-
-    #[doc(hidden)]
-    #[cfg(not(any(test, feature = "debug-metadata")))]
-    pub const fn __from_parts(contains: fn(&[u8]) -> bool, len: usize) -> Self {
-        Self { contains, len }
     }
 
     /// Returns `true` when the provided sequence is a member of the set.
@@ -59,20 +51,18 @@ impl ByteSet {
         self.len == 0
     }
 
-    #[cfg(any(test, feature = "debug-metadata"))]
-    #[cfg_attr(not(test), allow(dead_code))]
+    #[allow(dead_code)]
     pub(crate) fn debug_nodes(&self) -> &'static [debug::DebugNode] {
         self.metadata.nodes
     }
 
-    #[cfg(any(test, feature = "debug-metadata"))]
-    #[cfg_attr(not(test), allow(dead_code))]
+    #[allow(dead_code)]
     pub(crate) fn debug_edges(&self) -> &'static [debug::DebugEdge] {
         self.metadata.edges
     }
 }
 
-#[cfg(any(test, feature = "debug-metadata"))]
+#[allow(dead_code)]
 pub mod debug {
     /// Minimal node description emitted for tests and debugging.
     #[derive(Clone, Copy, Debug)]
