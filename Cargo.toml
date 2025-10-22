@@ -4,3 +4,11 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+
+[dev-dependencies]
+iai-callgrind = "0.15"
+rand = { version = "0.8", default-features = false, features = ["std", "std_rng"] }
+
+[[bench]]
+name = "byte_set"
+harness = false
