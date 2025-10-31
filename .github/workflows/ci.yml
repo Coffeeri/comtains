@@ -67,12 +67,22 @@ jobs:
           git worktree add ../tango-baseline origin/main
           mkdir -p ../tango-baseline-artifacts
           pushd ../tango-baseline
-          cargo fetch
-          cargo export ../tango-baseline-artifacts -- bench --bench=byte_set_tango
+          if cargo bench --bench byte_set_tango --no-run >/dev/null 2>&1; then
+            cargo export ../tango-baseline-artifacts -- bench --bench=byte_set_tango
+            echo "TANGO_BASELINE_READY=1" >> "$GITHUB_ENV"
+          else
+            echo "Tango bench target missing on baseline; skipping compare."
+            echo "TANGO_BASELINE_READY=0" >> "$GITHUB_ENV"
+          fi
           popd
 
       - name: Run Tango benchmarks vs main
-        run: cargo bench -q --bench byte_set_tango -- compare ../tango-baseline-artifacts/byte_set_tango --fail-threshold 1.0 --fail-fast
+        run: |
+          if [ "${TANGO_BASELINE_READY:-0}" != "1" ]; then
+            echo "Skipping Tango compare; baseline missing bench target."
+            exit 0
+          fi
+          cargo bench -q --bench byte_set_tango -- compare ../tango-baseline-artifacts/byte_set_tango --fail-threshold 1.0 --fail-fast
 
       - name: Cleanup Tango baseline
         if: always()
