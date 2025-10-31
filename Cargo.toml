@@ -24,7 +24,12 @@ comtains_macros = { path = "comtains_macros", version = "0.1.0" }
 [dev-dependencies]
 iai-callgrind = "0.16"
 rand = { version = "0.8", default-features = false, features = ["std", "std_rng"] }
+tango-bench = "0.6"
 
 [[bench]]
 name = "byte_set"
+harness = false
+
+[[bench]]
+name = "byte_set_tango"
 harness = false

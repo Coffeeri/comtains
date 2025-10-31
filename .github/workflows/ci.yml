@@ -52,8 +52,28 @@ jobs:
       - name: Install iai-callgrind-runner
         run: cargo install --locked --version 0.16.1 iai-callgrind-runner
 
+      - name: Install cargo-export
+        run: cargo install --locked cargo-export
+
       - name: Export runner path
         run: echo "IAI_CALLGRIND_RUNNER=$(which iai-callgrind-runner)" >> "$GITHUB_ENV"
 
       - name: Run benchmarks
         run: cargo bench --bench byte_set
+
+      - name: Prepare Tango baseline (main)
+        run: |
+          git fetch origin main
+          git worktree add ../tango-baseline origin/main
+          mkdir -p ../tango-baseline-artifacts
+          pushd ../tango-baseline
+          cargo fetch
+          cargo export ../tango-baseline-artifacts -- bench --bench=byte_set_tango
+          popd
+
+      - name: Run Tango benchmarks vs main
+        run: cargo bench -q --bench byte_set_tango -- compare ../tango-baseline-artifacts/byte_set_tango --fail-threshold 1.0 --fail-fast
+
+      - name: Cleanup Tango baseline
+        if: always()
+        run: git worktree remove --force ../tango-baseline || true
