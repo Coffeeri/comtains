@@ -50,7 +50,7 @@ jobs:
           sudo apt-get install -y valgrind
 
       - name: Install iai-callgrind-runner
-        run: cargo install --locked --version 0.15.2 iai-callgrind-runner
+        run: cargo install --locked --version 0.16.1 iai-callgrind-runner
 
       - name: Export runner path
         run: echo "IAI_CALLGRIND_RUNNER=$(which iai-callgrind-runner)" >> "$GITHUB_ENV"
