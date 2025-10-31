@@ -131,6 +131,26 @@ fn expand_byte_set(mut sequences: Vec<Vec<u8>>) -> Result<TokenStream2> {
     let mut unique = BTreeSet::new();
     sequences.retain(|seq| unique.insert(seq.clone()));
 
+    let min_len = sequences.iter().map(|seq| seq.len()).min().unwrap();
+    let max_len = sequences.iter().map(|seq| seq.len()).max().unwrap();
+    let min_len_lit = syn::LitInt::new(&format!("{min_len}usize"), Span::call_site());
+    let max_len_lit = syn::LitInt::new(&format!("{max_len}usize"), Span::call_site());
+
+    let mut bounds_checks = Vec::new();
+    if min_len > 0 {
+        let min_len_lit = min_len_lit.clone();
+        bounds_checks.push(quote! {
+            if len < #min_len_lit {
+                return false;
+            }
+        });
+    }
+    bounds_checks.push(quote! {
+        if len > #max_len_lit {
+            return false;
+        }
+    });
+
     let trie = build_trie(&sequences);
     let root_expr = generate_node_expr(&trie, 0, 0);
 
@@ -178,6 +198,7 @@ fn expand_byte_set(mut sequences: Vec<Vec<u8>>) -> Result<TokenStream2> {
             #[inline(always)]
             pub fn contains(candidate: &[u8]) -> bool {
                 let len = candidate.len();
+                #( #bounds_checks )*
                 #root_expr
             }
 
